@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách thuốc</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f2f5;
+        }
+
+        .card {
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">📦 Danh sách thuốc hiện có</h2>
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            {% for product in products %}
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">{{ product.name }}</h5>
+                        <p class="card-text mb-1">💊 <strong>Loại thuốc:</strong> {{ product.medicine_type }}</p>
+                        <p class="card-text mb-1">💰 <strong>Giá bán:</strong> {{ product.sale_price|floatformat:0 }}
+                            VND</p>
+                        <div class="mb-2">
+                            <label for="quantity-{{ product.id }}" class="form-label">
+                                🧾 <strong>Số lượng mua:</strong>
+                            </label>
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="number" id="quantity-{{ product.id }}" class="form-control quantity-input"
+                                    min="1" max="{{ product.stock_quantity }}" value="1">
+                                <span class="text-muted">{{ product.dvt }}</span>
+                            </div>
+                        </div>
+                        <p class="card-text mb-3">📦 <strong>Còn lại:</strong> {{ product.stock_quantity }}</p>
+                        <button class="btn btn-success w-100">🛒 Thêm vào giỏ hàng</button>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col">
+                <p class="text-muted">Không có sản phẩm nào.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+
+</html>
