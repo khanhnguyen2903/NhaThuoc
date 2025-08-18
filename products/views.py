@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
-from firebase_config import firebase_db
+from NhaThuoc.firebase import *
+from firebase_admin import db
 
 # Danh sách loại thuốc
 medicine_types = [
@@ -15,7 +16,7 @@ medicine_types = [
 
 def display_product(request):
   # Tham chiếu đến nút 'products' trong Realtime Database
-  ref = firebase_db.reference('products')
+  ref = db.reference('products')
   snapshot = ref.get()
 
   # Chuyển dữ liệu về dạng list các dicts có id
@@ -31,7 +32,7 @@ def display_product(request):
 def add_product(request):
   message = None
   # Lấy danh sách các danh mục sản phẩm
-  categories_ref = firebase_db.reference('categories')
+  categories_ref = db.reference('categories')
   categories_data = categories_ref.get() or {}
   categories = [
     {'id': key, 'name': value.get('name', 'Unknown')}
@@ -56,7 +57,7 @@ def add_product(request):
     }
 
     # Lưu vào Realtime Database
-    ref = firebase_db.reference('products')
+    ref = db.reference('products')
     ref.push(data)
 
     message = "Đã lưu sản phẩm thành công!"
@@ -64,13 +65,13 @@ def add_product(request):
   return render(request, 'products/add_product.html', {'message': message, 'categories': categories})
 
 def edit_product(request, product_id):
-  ref = firebase_db.reference(f'products/{product_id}')
+  ref = db.reference(f'products/{product_id}')
   product = ref.get()
 
   product['id'] = product_id
   type = product['medicine_type']
   # Lấy danh sách các danh mục sản phẩm
-  categories_ref = firebase_db.reference('categories')
+  categories_ref = db.reference('categories')
   categories_data = categories_ref.get() or {}
   categories = [
     {'id': key, 'name': value.get('name', 'Unknown')}
@@ -80,7 +81,7 @@ def edit_product(request, product_id):
   return render(request, 'products/edit_product.html', {'product': product, 'categories': categories, 'type': type})
 
 def update_product(request, product_id):
-  ref = firebase_db.reference(f'products/{product_id}')
+  ref = db.reference(f'products/{product_id}')
   
   if request.method == 'POST':
     updated_data = {
@@ -97,7 +98,7 @@ def update_product(request, product_id):
 
 def delete_product(request, product_id):
   if request.method == 'POST':
-    ref = firebase_db.reference(f'products/{product_id}')
+    ref = db.reference(f'products/{product_id}')
     ref.delete()
     return redirect('display_product')  # Chuyển về trang danh sách sản phẩm
 

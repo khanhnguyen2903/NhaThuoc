@@ -1,11 +1,12 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from firebase_config import firebase_db
+from NhaThuoc.firebase import *
+from firebase_admin import db
 from datetime import datetime
 
 def list_category(request):
     # Truy cập đến nút "categories" trong Firebase
-    ref = firebase_db.reference('categories')
+    ref = db.reference('categories')
     data = ref.get()
 
     # Chuyển dữ liệu về dạng danh sách để hiển thị
@@ -36,7 +37,7 @@ def create_category(request):
             error = 'Tên danh mục không được để trống'
         else:
             # Lấy danh sách danh mục hiện có từ Firebase
-            ref = firebase_db.reference('categories')
+            ref = db.reference('categories')
             existing_categories = ref.get()
 
             # Kiểm tra tên đã tồn tại (không phân biệt hoa thường)
@@ -68,7 +69,7 @@ def create_category(request):
 
 
 def delete_category(request, category_id):
-    ref = firebase_db.reference(f'categories/{category_id}')
+    ref = db.reference(f'categories/{category_id}')
     category = ref.get()
 
     if not category:

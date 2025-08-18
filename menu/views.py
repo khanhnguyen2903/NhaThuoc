@@ -1,8 +1,9 @@
 from django.shortcuts import render
-from firebase_config import firebase_db
+from NhaThuoc.firebase import *
+from firebase_admin import db
 
 def list_menu(request):
-    ref = firebase_db.reference('products')
+    ref = db.reference('products')
     product_data = ref.get()
     products = []
 

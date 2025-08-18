@@ -1,14 +1,15 @@
 # orders/views.py
 from django.shortcuts import render, redirect
 from django.utils import timezone
-from firebase_config import firebase_db  # Import Firebase config
+from NhaThuoc.firebase import *
+from firebase_admin import db
 from datetime import datetime
 from django.utils.dateparse import parse_datetime
 import json
 
 def add_order(request):
     # Truy vấn sản phẩm từ Firebase
-    products_ref = firebase_db.reference('products')
+    products_ref = db.reference('products')
     products_data = products_ref.get() or {}
 
     # Chuyển sản phẩm sang dạng list
@@ -68,7 +69,7 @@ def add_order(request):
                 products_ref.child(product['id']).update({'quantity': updated_quantity})
 
             # Lưu đơn hàng vào Firebase
-            orders_ref = firebase_db.reference('orders')
+            orders_ref = db.reference('orders')
             new_order_ref = orders_ref.push(order_data)
 
             # Xóa giỏ hàng sau khi lưu đơn hàng (tùy thuộc vào yêu cầu)
@@ -92,7 +93,7 @@ def add_order(request):
 def list_orders(request):
     try:
         # Fetch all orders from the 'orders' node in Realtime Database
-        ref = firebase_db.reference('orders')
+        ref = db.reference('orders')
         orders_data = ref.get()
         
         orders = []
