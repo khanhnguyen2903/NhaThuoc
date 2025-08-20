@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="vi">
 
 <head>
@@ -208,6 +208,229 @@
     document.getElementById('cartForm').addEventListener('submit', function () {
       document.getElementById('cartInput').value = JSON.stringify(cart);
       // Optional: Clear cart after submission
+      localStorage.removeItem('cart');
+    });
+  </script>
+</body>
+
+</html> -->
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tạo đơn hàng mới</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+
+<body class="bg-light">
+  <div class="container mt-5">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+      <h2 class="text-primary">📝 Tạo đơn hàng mới</h2>
+      <a href="{% url 'list_orders' %}" class="btn btn-outline-secondary w-100 w-md-auto">
+        🔙 Danh sách đơn hàng
+      </a>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <form method="post" id="orderForm">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label for="product_name" class="form-label">Tên sản phẩm</label>
+              <select class="form-select" id="product_name" name="product_name" required>
+                <option value="">-- Chọn sản phẩm --</option>
+                {% for product in products %}
+                <option value="{{ product.name }}" data-price="{{ product.sale_price }}" data-dvt="{{ product.dvt }}"
+                  data-type="{{ product.medicine_type }}" data-quantity="{{ product.quantity }}">
+                  {{ product.name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label for="product_type" class="form-label">Loại thuốc</label>
+              <input type="text" class="form-control" id="product_type" name="product_type" readonly />
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label for="product_price" class="form-label">Đơn giá</label>
+              <input type="text" class="form-control" id="product_price" name="product_price" readonly />
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label for="quantity" class="form-label">Số lượng mua</label>
+              <input type="number" class="form-control" id="quantity" name="quantity" placeholder="Nhập số lượng mua"
+                min="1" required />
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label for="store_quantity" class="form-label">Số lượng tồn kho</label>
+              <input type="number" class="form-control" id="store_quantity" name="store_quantity" readonly />
+            </div>
+
+            <div class="col-12 col-md-3">
+              <label for="product_dvt" class="form-label">ĐVT</label>
+              <input type="text" class="form-control" id="product_dvt" name="product_dvt" readonly />
+            </div>
+
+            <div class="col-12 col-md-3">
+              <label for="total_price" class="form-label">Thành tiền</label>
+              <input type="text" class="form-control" id="total_price" name="total_price" readonly />
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end mt-4">
+            <button type="button" class="btn btn-primary w-100 w-md-auto" id="addToCartBtn">
+              <i class="fas fa-cart-plus"></i> Thêm vào giỏ hàng
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-4">
+      <div class="card-body">
+        <h4 class="text-primary mb-3">🛒 Giỏ hàng</h4>
+        <form method="post" id="cartForm" action="{% url 'add_order' %}">
+          {% csrf_token %}
+          <input type="hidden" name="cart" id="cartInput">
+
+          <div class="mb-3">
+            <label for="id_customer" class="form-label">Mã khách hàng</label>
+            <input type="number" class="form-control" id="id_customer" name="id_customer"
+              placeholder="Nhập số điện thoại" required />
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-striped align-middle" id="cartTable">
+              <thead class="table-primary">
+                <tr>
+                  <th>Tên thuốc</th>
+                  <th>Loại thuốc</th>
+                  <th>Đơn giá</th>
+                  <th>Số lượng</th>
+                  <th>ĐVT</th>
+                  <th>Thành tiền</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody id="cartItems"></tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="5" class="text-center fw-bold">Tổng tiền:</td>
+                  <td id="cartTotal" class="fw-bold">0 VNĐ</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div class="d-flex justify-content-end mt-3">
+            <button type="submit" class="btn btn-success w-100 w-md-auto">
+              ✅ Lưu đơn hàng
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Giữ nguyên script xử lý giỏ hàng -->
+  <script>
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+    function updateCartTable() {
+      const cartItems = document.getElementById('cartItems');
+      const cartTotalElement = document.getElementById('cartTotal');
+      cartItems.innerHTML = '';
+      let totalCartAmount = 0;
+
+      cart.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${item.name}</td>
+          <td>${item.type}</td>
+          <td>${item.price} VNĐ</td>
+          <td>${item.quantity}</td>
+          <td>${item.dvt}</td>
+          <td>${item.total_item} VNĐ</td>
+          <td><button class="btn btn-danger btn-sm" onclick="removeFromCart(${index})">Xóa</button></td>
+        `;
+        cartItems.appendChild(row);
+        totalCartAmount += item.total_item;
+      });
+      cartTotalElement.textContent = totalCartAmount ? `${totalCartAmount} VNĐ` : '0 VNĐ';
+    }
+
+    function removeFromCart(index) {
+      cart.splice(index, 1);
+      localStorage.setItem('cart', JSON.stringify(cart));
+      updateCartTable();
+    }
+
+    document.getElementById('product_name').addEventListener('change', function () {
+      const selectedOption = this.options[this.selectedIndex];
+      const price = selectedOption.getAttribute('data-price');
+      const dvt = selectedOption.getAttribute('data-dvt');
+      const type = selectedOption.getAttribute('data-type');
+      const store_quantity = selectedOption.getAttribute('data-quantity');
+      document.getElementById('product_price').value = price ? price + ' VNĐ' : '';
+      document.getElementById('product_dvt').value = dvt;
+      document.getElementById('product_type').value = type;
+      document.getElementById('store_quantity').value = store_quantity;
+      document.getElementById('quantity').value = 1;
+      updateTotalPrice();
+    });
+
+    document.getElementById('quantity').addEventListener('input', function () {
+      updateTotalPrice();
+    });
+
+    function updateTotalPrice() {
+      const price = parseFloat(document.getElementById('product_price').value) || 0;
+      const quantity = parseInt(document.getElementById('quantity').value) || 0;
+      const total_item = price * quantity;
+      document.getElementById('total_price').value = total_item ? total_item + ' VNĐ' : '';
+    }
+
+    document.getElementById('addToCartBtn').addEventListener('click', function () {
+      const productName = document.getElementById('product_name').value;
+      const productType = document.getElementById('product_type').value;
+      const productPrice = parseFloat(document.getElementById('product_price').value) || 0;
+      const quantity = parseInt(document.getElementById('quantity').value) || 0;
+      const storeQuantity = parseInt(document.getElementById('store_quantity').value) || 0;
+      const dvt = document.getElementById('product_dvt').value;
+      const total_item = productPrice * quantity;
+
+      if (!productName || quantity <= 0 || quantity > storeQuantity) {
+        alert('Vui lòng chọn sản phẩm và nhập số lượng hợp lệ (nhỏ hơn hoặc bằng tồn kho)!');
+        return;
+      }
+
+      const cartItem = {
+        name: productName,
+        type: productType,
+        price: productPrice,
+        quantity: quantity,
+        dvt: dvt,
+        total_item: total_item
+      };
+
+      cart.push(cartItem);
+      localStorage.setItem('cart', JSON.stringify(cart));
+      updateCartTable();
+      alert('Đã thêm sản phẩm vào giỏ hàng!');
+    });
+
+    updateCartTable();
+
+    document.getElementById('cartForm').addEventListener('submit', function () {
+      document.getElementById('cartInput').value = JSON.stringify(cart);
       localStorage.removeItem('cart');
     });
   </script>
