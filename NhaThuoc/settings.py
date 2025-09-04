@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'orders',
     'main',
     'categories',
+    'report',
     'whitenoise.runserver_nostatic',
 ]
 
